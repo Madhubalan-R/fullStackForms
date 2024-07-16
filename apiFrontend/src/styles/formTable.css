@@ -1,0 +1,9 @@
+table{
+    height: auto;
+    width: auto;
+    border: 1px solid black;
+}
+tr,th,td{
+    padding: 10px;
+    border: 1px solid black;
+}
