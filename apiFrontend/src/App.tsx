@@ -4,7 +4,7 @@ import FormTable from './components/formTable';
 const App: React.FC = () => {
   return (
     <div>
-      <h1>Form Data</h1>
+      <h1 className='head'>Form Data</h1>
       <FormTable />
     </div>
   );

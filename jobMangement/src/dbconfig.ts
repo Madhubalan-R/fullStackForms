@@ -10,7 +10,7 @@ export const AppDataSource = new DataSource({
   password: "crudpassword",
   database: "crud1",
   synchronize: true,
-  logging: true,
+  logging: false,
   entities: [path.join(process.cwd(), "src/entites/*.ts")],
   migrations: ["src/migrations/**/*.ts"],
   subscribers: []

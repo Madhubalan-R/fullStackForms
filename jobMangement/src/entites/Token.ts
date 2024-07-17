@@ -4,17 +4,17 @@ import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn } from 'typeor
 @Entity()
 export class Token {
   @PrimaryGeneratedColumn()
-  id: number=0;
+  id: number;
 
   @Column()
-  accessToken: string='';
+  accessToken: string;
 
   @Column()
-  refreshToken: string='';
+  refreshToken: string;
 
   @Column('bigint')
-  tokenExpiresAt: number=0;
+  tokenExpiresAt: number;
 
   @CreateDateColumn()
-  createdAt: Date= new Date();
+  createdAt: Date;
 }

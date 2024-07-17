@@ -11,16 +11,16 @@ export enum FormStatus{
 @Entity()
 export class FormApiData {
   @PrimaryGeneratedColumn()
-  id: number=0;
+  id: number;
 
   @Column('bigint')
-  componentId: number=0;
+  componentId: number;
 
   @Column()
-  formLinkName: string='';
+  formLinkName: string;
 
   @Column()
-  PermissionDetails: string='';
+  PermissionDetails: string;
 
   @Column({
     type:'enum',
@@ -30,8 +30,8 @@ export class FormApiData {
   status: FormStatus = FormStatus.ADDED;
 
   @Column({default: 0})
-  retryCount: number=0;
+  retryCount: number;
   
   @CreateDateColumn()
-  createdAt: Date= new Date();
+  createdAt: Date;
 }

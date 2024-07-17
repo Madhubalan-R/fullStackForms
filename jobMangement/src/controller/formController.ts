@@ -26,7 +26,32 @@ interface CustomRequest extends Request {
   });
  };
 
-export const getForms = async (req: CustomRequest, res: Response) => {
+ const saveFormApiData = async (
+  repository: any,
+  componentId: number,
+  formLinkName: string,
+  permissionDetails: string,
+  status: FormStatus,
+  savedForms: FormApiData[]
+ ) => {
+  try{
+      const formApiData = new FormApiData();
+      formApiData.componentId = componentId;
+      formApiData.formLinkName = formLinkName;
+      formApiData.PermissionDetails = permissionDetails;
+      formApiData.status = status;
+
+      await repository.save(formApiData);
+      sendWebSocketMessage({status});
+      savedForms.push(formApiData);
+  }
+  catch(error){
+    console.error('Error saving form data', error);
+   throw error;
+  }
+ };
+
+ export const getForms = async (req: CustomRequest, res: Response) => {
   const accessToken = req.accessToken;
   console.log("AccessToken", accessToken);
   if (!accessToken) {
@@ -44,13 +69,18 @@ export const getForms = async (req: CustomRequest, res: Response) => {
     });
 
     if (!response.data || !response.data.response.result) {
-    sendWebSocketMessage({ status: FormStatus.FAILED});
+      sendWebSocketMessage({ status: FormStatus.FAILED });
       return res.status(404).json({ error: 'Form data not found' });
     }
 
-    const apiData = response.data.response.result;
+    const apiData = response.data?.response?.result ?? [];
 
-    const savedForms= [];
+    if (apiData.length === 0) {
+      sendWebSocketMessage({ status: FormStatus.FAILED });
+      return res.json({ error: 'No forms found' });
+    }
+
+    const savedForms: FormApiData[] = [];
 
     for (const api of apiData) {
       const componentId = api.componentId ? parseInt(api.componentId, 10) : 0;
@@ -59,36 +89,11 @@ export const getForms = async (req: CustomRequest, res: Response) => {
 
       if (!isNaN(componentId) && formLinkName && permissionDetails) {
         try {
-          const FormApiDataAdded = new FormApiData();
-          FormApiDataAdded.componentId = componentId;
-          FormApiDataAdded.formLinkName = formLinkName;
-          FormApiDataAdded.PermissionDetails = permissionDetails;
-          FormApiDataAdded.status = FormStatus.ADDED;
-          await FormApiDataRepository.save(FormApiDataAdded);
-          sendWebSocketMessage({ status: FormStatus.ADDED});
-          savedForms.push(FormApiDataAdded);
+          await saveFormApiData(FormApiDataRepository, componentId, formLinkName, permissionDetails, FormStatus.ADDED, savedForms);
+          await saveFormApiData(FormApiDataRepository, componentId, formLinkName, permissionDetails, FormStatus.IN_PROGRESS, savedForms);
 
-          const FormApiDataInProgress = new FormApiData();
-          FormApiDataInProgress.componentId = componentId;
-          FormApiDataInProgress.formLinkName = formLinkName;
-          FormApiDataInProgress.PermissionDetails = permissionDetails;
-          FormApiDataInProgress.status = FormStatus.IN_PROGRESS;
-          await FormApiDataRepository.save(FormApiDataInProgress);
-          sendWebSocketMessage({ status: FormStatus.IN_PROGRESS});
-          savedForms.push(FormApiDataInProgress);
-
-          const processedStatus = processData();
-          const FormApiDataCompletedOrFailed = new FormApiData();
-
-          FormApiDataCompletedOrFailed.componentId = componentId;
-          FormApiDataCompletedOrFailed.formLinkName = formLinkName;
-          FormApiDataCompletedOrFailed.PermissionDetails = permissionDetails;
-          FormApiDataCompletedOrFailed.status = processedStatus ? FormStatus.COMPLETED : FormStatus.FAILED;
-          await FormApiDataRepository.save(FormApiDataCompletedOrFailed);
-          sendWebSocketMessage({ status: FormApiDataCompletedOrFailed.status});
-
-          savedForms.push(FormApiDataCompletedOrFailed);
-
+          const processedStatus = processData() ? FormStatus.COMPLETED : FormStatus.FAILED;
+          await saveFormApiData(FormApiDataRepository, componentId, formLinkName, permissionDetails, processedStatus, savedForms);
         } catch (error) {
           console.error('Error saving form data:', error);
           return res.status(500).json({ error: 'Failed to save form data' });
@@ -98,13 +103,13 @@ export const getForms = async (req: CustomRequest, res: Response) => {
     return res.json(savedForms);
   } catch (error) {
     console.error('Error fetching forms:', error);
-    sendWebSocketMessage({ status: FormStatus.FAILED});
+    sendWebSocketMessage({ status: FormStatus.FAILED });
     return res.status(500).json({ error: 'Failed to fetch forms data' });
   }
 };
 
 const processData = () => {
-  const randomSuccess = Math.random() >= 0.2; 
+  const randomSuccess = Math.random() >= 0.2;// 80% chance of  success
   return randomSuccess;
 };
 
@@ -184,7 +189,7 @@ export const retryFailedFormsEndpoint = async (req: Request, res: Response) => {
 // Schedule the retry process to run every hour
 cron.schedule('0 * * * *', async () => {
   console.log('Running scheduled retry process...');
-  const accessToken = '1000.7ebe020d85567680fc06865bde2e2d8f.92b7424271ea923965f22d5d4e2f94a1';
+  const accessToken = '1000.f8679d3ea27e10ba83a8c041c14b37a8.4e0b3e0e012cb173bde033cb1e51683b';
 
   await retryFailedForms(accessToken);
 });
