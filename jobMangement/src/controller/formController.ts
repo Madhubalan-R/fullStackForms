@@ -222,3 +222,15 @@ export const getAllForms = async (req: Request, res: Response) => {
     res.status(500).json({ error: 'Failed to fetch all forms' });
   }
 };
+export const updateFormStatus = async(id: number, status:FormStatus) => {
+  const formApiDataRepository = AppDataSource.getRepository(FormApiData);
+  const form = await formApiDataRepository.findOne({where:{ id }});
+
+  if(form){
+      form.status = status;
+      await formApiDataRepository.save(form);
+  }
+  else{
+    console.error(`Form with id ${id} not found`);
+  }
+};

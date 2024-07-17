@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
-import "../styles/formTable.css"
+import "../styles/formTable.css";
 
 interface FormApiData {
   id: number;
@@ -14,7 +14,7 @@ interface FormApiData {
 const App: React.FC = () => {
   const [forms, setForms] = useState<FormApiData[]>([]);
   const [error, setError] = useState<string | null>(null);
-  const [loading, setLoading] = useState<boolean>(true); 
+  const [loading, setLoading] = useState<boolean>(true);
 
   useEffect(() => {
     fetchForms();
@@ -22,9 +22,8 @@ const App: React.FC = () => {
 
   const fetchForms = async () => {
     setLoading(true);
-    setError(null);
     try {
-      const response = await axios.get('/api/getAllForms');
+      const response = await axios.get('/api/forms');
       const data = response.data;
       if (Array.isArray(data)) {
         setForms(data);
@@ -40,32 +39,26 @@ const App: React.FC = () => {
   };
 
   const retryForm = async (id: number) => {
-    setLoading(true);
-    setError(null);
     try {
-      const accessToken = "1000.f8679d3ea27e10ba83a8c041c14b37a8.4e0b3e0e012cb173bde033cb1e51683b";
-      const response = await axios.post(`http://localhost:3081/api/gddhh/${id}`, null, {
-        params: { accessToken }
-      });
+      const response = await axios.post(`/retryForms/${id}`); 
       const updatedForm = response.data;
-      setForms(forms.map(form => 
-        form.id === updatedForm.id ? { ...form, ...updatedForm, retryCount: form.retryCount + 1 } : form
-      ));
+      setForms((prevForms) =>
+        prevForms.map((form) =>
+          form.id === updatedForm.id ? updatedForm : form
+        )
+      );
     } catch (error) {
       console.error('Error retrying form data:', error);
       setError('Failed to retry form data');
-    } finally {
-      setLoading(false);
     }
   };
 
   if (loading) {
-
-    return <div className='loading'>Loading Process...</div>;
+    return <div className='loading'>Fetching Data...</div>;
   }
 
   if (error) {
-    return <div>Error: {error}</div>;
+    return <div className='loading'>Error: {error}</div>;
   }
 
   return (
@@ -91,9 +84,10 @@ const App: React.FC = () => {
               <td>{form.PermissionDetails}</td>
               <td>{form.status}</td>
               <td>
-                {form.status === 'Failed' && (
+                {form.status === 'Failed' && form.retryCount < 5 && (
                   <button onClick={() => retryForm(form.id)}>Retry</button>
                 )}
+                {form.retryCount >= 5 && <span>Max retries reached</span>}
               </td>
               <td>{form.retryCount}</td>
             </tr>

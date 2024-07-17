@@ -40,11 +40,11 @@ const saveToken = async (accessToken: string, refreshToken: string, expiresIn: n
     throw error;
   }
 };
-const getToken = async () => {
+export const getToken = async () => {
   try {
     const tokenRepository = AppDataSource.getRepository(Token);
     const token = await tokenRepository.findOne({ where: { id: 1 }, order: { id: 'DESC' } });
-    return token;
+   return token;
   }
   catch (error) {
     console.error('Error fetching Token', error);
@@ -84,18 +84,7 @@ const refreshToken = async (refreshToken: string) => {
     throw new Error('failed to refresh token');
   }
 };
-export const updateFormStatus = async(id: number, status:FormStatus) => {
-  const formApiDataRepository = AppDataSource.getRepository(FormApiData);
-  const form = await formApiDataRepository.findOne({where:{ id }});
 
-  if(form){
-      form.status = status;
-      await formApiDataRepository.save(form);
-  }
-  else{
-    console.error(`Form with id ${id} not found`);
-  }
-};
 
 export default {
   saveToken,
